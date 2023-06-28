@@ -3,9 +3,9 @@ from config import db_config
 from parser import get_data
 
 
-def create_form(title, description, price, contacts, link):
-    form = f"INSERT INTO info (title, description, price, contacts, link) VALUES ('{title}', '{description}'," \
-           f" '{price}', '{contacts}', '{link}')"
+def create_form(title, description, price, address, metro, link):
+    form = f"INSERT INTO info (title, description, price, address, metro, link) VALUES ('{title}', '{description}'," \
+           f" '{price}', '{address}', '{metro}', '{link}')"
     return form
 
 
@@ -19,9 +19,8 @@ try:
     )
     print("successfully connected...")
     cursor = connection.cursor()
-    cursor.execute("CREATE TABLE IF NOT EXISTS `info` (title varchar(32), description varchar(32),"
-                   "price varchar(32), metro varchar(32), link varchar(32))")
-
+    cursor.execute("CREATE TABLE IF NOT EXISTS `info`(title LONGTEXT, description LONGTEXT,"
+                   " price LONGTEXT, address LONGTEXT, metro LONGTEXT, link LONGTEXT);")
     numb = int(input())
     for i in range(numb):
         data = get_data(category)
