@@ -20,6 +20,7 @@ def get_data(category):
     address = address_and_metro[0]
     metro = address_and_metro[1]
     result = [title, description, price, address, metro, link]
+    driver.close()
     return result
 
 
