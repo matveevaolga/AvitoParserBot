@@ -23,11 +23,13 @@ def connect_and_insert(category):
             data = parse_data(category)
             form = create_form(data)
             cursor.execute(form)
+            print("Successfully inserted")
         connection.connect.commit()
         connection.close_connect()
-        print("Successfully inserted")
     except pymysql.err.IntegrityError:
         print("There are no more new advertisements to add.")
+    except Exception as ex:
+        print(ex)
 
 
 if __name__ == "__main__":
