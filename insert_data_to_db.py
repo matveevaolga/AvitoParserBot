@@ -5,7 +5,7 @@ from selenium import webdriver
 
 
 def create_form(data):
-    form = f"INSERT INTO zhivotnye (animal_id, title, photo, description, price, location, link) VALUES ("
+    form = f"INSERT INTO {category} (animal_id, title, photo, description, price, location, link) VALUES ("
     for key in data.keys():
         form += f"'{data[key]}'"
         if key != 'link':
@@ -21,28 +21,34 @@ def get_driver():
     return driver
 
 
-def connect_and_insert(category):
+def exists(cursor, id):
+    form = f"SELECT id FROM {category} where animal_id = '{id}';"
+    return cursor.execute(form)
+
+
+def connect_and_insert(category, numb):
     try:
         connection = Bd()
         connection.open_connect()
         cursor = connection.connect.cursor()
-        numb = int(input())
         driver = get_driver()
         for i in range(numb):
             driver.get(f"https://avito.ru/moskva/{category}")
             data = parse_data(category, driver)
+            if exists(cursor, data['animal_id']):
+                print("There are no more new advertisements to add.")
+                break
             form = create_form(data)
             cursor.execute(form)
             print("Successfully inserted")
         driver.close()
         connection.connect.commit()
         connection.close_connect()
-    except pymysql.err.IntegrityError:
-        print("There are no more new advertisements to add.")
     except Exception as ex:
         print(ex)
 
 
 if __name__ == "__main__":
     category = "zhivotnye"
-    connect_and_insert(category)
+    numb = int(input())
+    connect_and_insert(category, numb)
