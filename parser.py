@@ -42,14 +42,8 @@ def form_dict(driver, category):
     return formed_dict
 
 
-def parse_data(category):
+def parse_data(category, driver):
     current_number[category] += 1
-    link = f"https://avito.ru/moskva/{category}"
-    options = webdriver.ChromeOptions()
-    options.add_argument("--headless")
-    driver = webdriver.Chrome(options=options)
-    driver.get(link)
     result = form_dict(driver, category)
     print("Successfully parsed", end=" ")
-    driver.close()
     return result
