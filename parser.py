@@ -1,26 +1,53 @@
+import time
+
 import undetected_chromedriver as uc
 
 current_number = {
     "zhivotnye": 0
 }
 
+selector_dict = {
+    "animal_id": "...",
+    "title": ".title-info-title-text",
+    "photo": '[data-marker="item-view/gallery"] img',
+    "description": "[itemprop=description]",
+    "price": ".styles-module-size_xxxl-A2qfi",
+    "location": "[itemprop=address]",
+    "link": "..."
+}
 
-def get_data(category):
+
+def form_dict(driver, category):
+    formed_dict = {}
+    link = ''
+    item = driver.find_element(uc.By.CSS_SELECTOR, f"[data-marker=item]:nth-of-type({current_number[category]})")
+    for key in selector_dict.keys():
+        try:
+            if key == 'photo':
+                formed_dict[key] = driver.find_element(uc.By.CSS_SELECTOR, selector_dict[key]).screenshot_as_base64
+            elif key == 'animal_id':
+                formed_dict[key] = item.get_attribute("id")
+                item = item.find_element(uc.By.CSS_SELECTOR, ".iva-item-title-py3i_ a[itemprop='url']")
+                link = item.get_attribute("href")
+                driver.get(link)
+            elif key == 'link':
+                formed_dict[key] = link
+            elif key == 'location':
+                formed_dict[key] = driver.find_element(uc.By.CSS_SELECTOR, selector_dict[key]).text.split('\n', maxsplit=1)[0].strip()
+            else:
+                formed_dict[key] = driver.find_element(uc.By.CSS_SELECTOR, selector_dict[key]).text
+        except Exception as ex:
+            print(key, ': ')
+            print(ex)
+            formed_dict[key] = None
+    return formed_dict
+
+
+def parse_data(category):
     current_number[category] += 1
     link = f"https://avito.ru/moskva/{category}"
     driver = uc.Chrome()
     driver.get(link)
-    item = driver.find_element(uc.By.CSS_SELECTOR, f"[data-marker=item]:nth-of-type({current_number[category]}) a")
-    link = item.get_attribute("href")
-    driver.get(link)
-    title = driver.find_element(uc.By.CSS_SELECTOR, ".title-info-title-text").text
-    description = driver.find_element(uc.By.CSS_SELECTOR, "[itemprop=description]").text
-    price = driver.find_element(uc.By.CSS_SELECTOR, ".styles-module-size_xxxl-A2qfi").text
-    address_and_metro = driver.find_element(uc.By.CSS_SELECTOR, "[itemprop=address]").text.split('\n', maxsplit=1)
-    address = address_and_metro[0]
-    metro = address_and_metro[1]
-    result = [title, description, price, address, metro, link]
+    result = form_dict(driver, category)
     driver.close()
     return result
-
-

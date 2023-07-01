@@ -1,33 +1,34 @@
+from parser import parse_data
+from bd_module import Bd
 import pymysql
-from config import db_config
-from parser import get_data
 
 
-def create_form(title, description, price, address, metro, link):
-    form = f"INSERT INTO info (title, description, price, address, metro, link) VALUES ('{title}', '{description}'," \
-           f" '{price}', '{address}', '{metro}', '{link}')"
+def create_form(data):
+    form = f"INSERT INTO zhivotnye (animal_id, title, photo, description, price, location, link) VALUES ("
+    for key in data.keys():
+        form += f"'{data[key]}'"
+        if key != 'link':
+            form += ', '
+    form += ");"
     return form
 
 
-try:
-    category = "zhivotnye"
-    connection = pymysql.connect(
-        host=db_config[category]["host"],
-        user=db_config[category]["user"],
-        password=db_config[category]["password"],
-        database=db_config[category]["db_name"],
-    )
-    print("successfully connected...")
-    cursor = connection.cursor()
-    cursor.execute("CREATE TABLE IF NOT EXISTS `info`(title LONGTEXT, description LONGTEXT,"
-                   " price LONGTEXT, address LONGTEXT, metro LONGTEXT, link LONGTEXT);")
-    numb = int(input())
-    for i in range(numb):
-        data = get_data(category)
-        form = create_form(*data)
-        cursor.execute(form)
-    connection.commit()
-except Exception as ex:
-    print("Connection refused...")
-    print(ex, "--")
+def connect_and_insert(category):
+    try:
+        connection = Bd()
+        connection.open_connect()
+        cursor = connection.connect.cursor()
+        numb = int(input())
+        for i in range(numb):
+            data = parse_data(category)
+            form = create_form(data)
+            cursor.execute(form)
+        connection.connect.commit()
+        connection.close_connect()
+    except pymysql.err.IntegrityError:
+        print("There are no more new advertisements to add.")
 
+
+if __name__ == "__main__":
+    category = "zhivotnye"
+    connect_and_insert(category)
