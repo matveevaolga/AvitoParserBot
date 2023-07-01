@@ -25,6 +25,7 @@ def connect_and_insert(category):
             cursor.execute(form)
         connection.connect.commit()
         connection.close_connect()
+        print("Successfully inserted")
     except pymysql.err.IntegrityError:
         print("There are no more new advertisements to add.")
 

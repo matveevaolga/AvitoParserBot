@@ -1,6 +1,5 @@
-import time
-
 import undetected_chromedriver as uc
+from selenium import webdriver
 
 current_number = {
     "zhivotnye": 0
@@ -46,8 +45,11 @@ def form_dict(driver, category):
 def parse_data(category):
     current_number[category] += 1
     link = f"https://avito.ru/moskva/{category}"
-    driver = uc.Chrome()
+    options = webdriver.ChromeOptions()
+    options.headless = True
+    driver = uc.Chrome(version_main=114, options=options)
     driver.get(link)
     result = form_dict(driver, category)
+    print("Successfully parsed", end=" ")
     driver.close()
     return result
