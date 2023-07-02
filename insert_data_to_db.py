@@ -1,10 +1,10 @@
-from parser import parse_data
+from parser_module import Parser
 from bd_module import Bd
 from selenium import webdriver
 
 
 def create_form(data):
-    form = f"INSERT INTO {category} (animal_id, title, photo, description, price, location, link) VALUES ("
+    form = f"INSERT INTO {category} ({category}_id, title, photo, description, price, location, link) VALUES ("
     for key in data.keys():
         form += f"'{data[key]}'"
         if key != 'link':
@@ -26,7 +26,7 @@ def get_driver():
 
 
 def exists(cursor, id):
-    form = f"SELECT id FROM {category} where animal_id = '{id}';"
+    form = f"SELECT id FROM {category} where {category}_id = '{id}';"
     return cursor.execute(form)
 
 
@@ -38,8 +38,9 @@ def connect_and_insert(category, numb):
         driver = get_driver()
         for i in range(numb):
             driver.get(f"https://avito.ru/moskva/{category}")
-            data = parse_data(category, driver)
-            if exists(cursor, data['animal_id']):
+            parser = Parser(category, driver)
+            data = parser.parse_data()
+            if exists(cursor, data[f'{category}_id']):
                 print("Has already been added")
             else:
                 form = create_form(data)
