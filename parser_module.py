@@ -18,7 +18,7 @@ class Parser:
             "link": "..."
         }
 
-    def form_dict(self, driver, category):
+    def _form_dict(self, driver, category):
         formed_dict = {}
         link = ''
         item = driver.find_element(By.CSS_SELECTOR, f"[data-marker=item]:nth-of-type({self.current_number[category]})")
@@ -45,6 +45,6 @@ class Parser:
 
     def parse_data(self):
         self.current_number[self.category] += 1
-        result = self.form_dict(self.driver, self.category)
+        result = self._form_dict(self.driver, self.category)
         print("Successfully parsed", end=" ")
         return result
