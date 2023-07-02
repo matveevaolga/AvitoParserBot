@@ -1,10 +1,11 @@
 from parser_module import Parser
 from bd_module import Bd
 from selenium import webdriver
+import base64
 
 
 def create_form(data):
-    form = f"INSERT INTO {category} ({category}_id, title, photo, description, price, location, link) VALUES ("
+    form = f"insert into {category} ({category}_id, title, photo, description, price, location, link) values ("
     for key in data.keys():
         form += f"'{data[key]}'"
         if key != 'link':
@@ -30,7 +31,7 @@ def exists(cursor, id):
     return cursor.execute(form)
 
 
-def connect_and_insert(category, numb):
+def insert_data(category, numb):
     try:
         connection = Bd()
         connection.open_connect()
@@ -53,7 +54,30 @@ def connect_and_insert(category, numb):
         print(ex)
 
 
+def get_data(category, numb):
+    try:
+        connection = Bd()
+        connection.open_connect()
+        cursor = connection.connect.cursor()
+        cursor.execute(f"show columns from {category}")
+        columns = [info[0] for info in cursor.fetchall()]
+        result = {}
+        for id in range(1, numb+1):
+            cur = {}
+            form = f"select * from {category} where id = '{id}';"
+            cursor.execute(form)
+            row = list(cursor.fetchone())
+            row[3] = base64.decodebytes(row[3])
+            for value, column in zip(row, columns):
+                cur[column] = value
+            result[id] = cur
+        return result
+    except Exception as ex:
+        print(ex)
+
+
 if __name__ == "__main__":
     category = "zhivotnye"
     numb = int(input())
-    connect_and_insert(category, numb)
+    #insert_data(category, numb)
+    get_data(category, numb)
