@@ -7,6 +7,7 @@ class Bd:
         self.connect = None
 
     def open_connect(self):
+        # установление соединения с бд с помощью данных из db_config
         try:
             self.connect = pymysql.connect(
                 host=db_config["host"],
