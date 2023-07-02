@@ -1,6 +1,5 @@
 from parser import parse_data
 from bd_module import Bd
-import pymysql
 from selenium import webdriver
 
 
@@ -16,8 +15,13 @@ def create_form(data):
 
 def get_driver():
     options = webdriver.ChromeOptions()
+    options.add_experimental_option("excludeSwitches", ["enable-automation"])
+    options.add_experimental_option('useAutomationExtension', False)
+    options.add_argument("--disable-blink-features=AutomationControlled")
     options.add_argument("--headless")
-    driver = webdriver.Chrome(options=options)
+    driver = webdriver.Chrome(options=options, executable_path=r"webdriver\chromedriver.exe")
+    driver.maximize_window()
+    driver.implicitly_wait(60)
     return driver
 
 
@@ -36,11 +40,11 @@ def connect_and_insert(category, numb):
             driver.get(f"https://avito.ru/moskva/{category}")
             data = parse_data(category, driver)
             if exists(cursor, data['animal_id']):
-                print("There are no more new advertisements to add.")
-                break
-            form = create_form(data)
-            cursor.execute(form)
-            print("Successfully inserted")
+                print("Has already been added")
+            else:
+                form = create_form(data)
+                cursor.execute(form)
+                print("Successfully inserted")
         driver.close()
         connection.connect.commit()
         connection.close_connect()
