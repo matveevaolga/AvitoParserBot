@@ -1,10 +1,12 @@
 from selenium.webdriver.common.by import By
+from bd_module import Bd
+from selenium import webdriver
 
 
 class Parser:
-    def __init__(self, category, driver):
+    def __init__(self, driver, cursor):
         self.driver = driver
-        self.category = category
+        self.cursor = cursor
         # словарь с порядковым номером последнего обработанного объявления на странице каждой из категорий
         self.current_number = {
             "zhivotnye": 0,
@@ -15,7 +17,7 @@ class Parser:
         }
         # словарь с соответствующими селекторами для каждого столбца таблицы
         self.selector_dict = {
-            f"{category}_id": "...",
+            "_id": "...",
             "title": ".title-info-title-text",
             "photo": '[data-marker="item-view/gallery"] img',
             "description": "[itemprop=description]",
@@ -34,8 +36,16 @@ class Parser:
             try:
                 if key == 'photo':
                     formed_dict[key] = driver.find_element(By.CSS_SELECTOR, self.selector_dict[key]).screenshot_as_base64
-                elif key == f'{category}_id':
-                    formed_dict[key] = item.get_attribute("id")
+                elif key == '_id':
+                    # если объявление уже встречалось в таблице выбранной категории, переход
+                    # к парсингу следующего объявления
+                    if self.cursor.execute(
+                            f"SELECT id FROM {category} where {category}_id = '{item.get_attribute('id')}';"):
+                        print("Has already been added", item.get_attribute('id'))
+                        formed_dict = {}
+                        break
+                    # иначе продолжаем парсинг
+                    formed_dict[f'{category}_id'] = item.get_attribute("id")
                     # найдено объявление => переход на его страницу
                     item = item.find_element(By.CSS_SELECTOR, ".iva-item-title-py3i_ a[itemprop='url']")
                     link = item.get_attribute("href")
@@ -52,9 +62,16 @@ class Parser:
                 formed_dict[key] = None
         return formed_dict
 
-    def parse_data(self):
+    def parse_data(self, numb, category):
         # будет парсинг объявления под этим номером
-        self.current_number[self.category] += 1
-        result = self._form_dict(self.driver, self.category)
-        print("Successfully parsed", end=" ")
+        result = []
+        while len(result) != numb:
+            # парсинг продолжается, пока в таблицу выбранной категории не добавится необходимое кол-во объявлений
+            # переход на страницу сайта с выбранной категорией
+            self.driver.get(f"https://avito.ru/moskva/{category}")
+            self.current_number[category] += 1
+            cur = self._form_dict(self.driver, category)
+            if cur:
+                result.append(cur)
+                print(f"Successfully parsed {cur[f'{category}_id']}")
         return result
