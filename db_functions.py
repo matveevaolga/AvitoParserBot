@@ -10,7 +10,8 @@ class Functions:
         self.start_getting_data = 1
         # инициализация курсора и соединения с базой данных
         self.connection = Bd()
-        self.cursor = None
+        self.cursor = self.connection.connect.cursor()
+        self.driver = Functions.get_driver()
 
     # создание формы для sql-запроса на добавление записи в таблицу
     @staticmethod
@@ -37,56 +38,36 @@ class Functions:
         driver.implicitly_wait(20)
         return driver
 
-    # проверка на наличие записи в таблице
-    @staticmethod
-    def exists(cursor, id, category):
-        form = f"SELECT id FROM {category} where {category}_id = '{id}';"
-        return cursor.execute(form)
-
-    def insert_data(self, category, numb):
-        self.connection.open_connect()
-        self.cursor = self.connection.connect.cursor()
+    async def insert_data(self, category, numb):
         try:
-            driver = Functions.get_driver()
-            parser = Parser(category, driver)
-            # парсинг продолжается, пока в таблицу выбранной категории не добавится необходимое кол-во объявлений
-            while numb != 0:
+            parser = Parser(self.driver, self.cursor)
+            # парсинг объявлений
+            # в data находятся numb объявлений
+            data = parser.parse_data(numb, category)
+            for ad in data:
                 try:
-                    # переход на страницу сайта с выбранной категорией
-                    driver.get(f"https://avito.ru/moskva/{category}")
-                    # парсинг объявления
-                    data = parser.parse_data()
-                    # если объявление уже встречалось в таблице выбранной категории, переход
-                    # к парсингу следующего объявления
-                    if Functions.exists(self.cursor, data[f'{category}_id'], category):
-                        print("Has already been added", data[f'{category}_id'])
-                    # иначе добавляем элемент в таблицу
-                    else:
-                        form = Functions.create_form(data, category)
-                        self.cursor.execute(form)
-                        numb -= 1
-                        print(f"Successfully inserted, {numb} left")
+                    # добавление элемента в таблицу
+                    form = Functions.create_form(ad, category)
+                    self.cursor.execute(form)
+                    numb -= 1
+                    print(f"Successfully inserted {ad[f'{category}_id']} {numb} left")
                 except Exception as ex:
                     print("Inserting error", ex)
-            self.connection.connect.commit()
-            driver.close()
         except Exception as ex:
-            print(ex)
+            print(ex, "insert_data")
 
-    def get_data(self, category, numb):
+    async def get_data(self, category, numb):
         try:
-            self.connection.open_connect()
-            self.cursor = self.connection.connect.cursor()
             # собираем в список имена всех столбцов в таблице выбранной категории
             self.cursor.execute(f"show columns from {category}")
             columns = [info[0] for info in self.cursor.fetchall()]
             result = {}
             # продолжаем вытаскивать записи из таблицы, пока не наберется нужное кол-во объявлений,
-            # начиная с записи под id start_getting_data (id = порядковый номер записи)
+            # начиная с записи под порядковым номером записи start_getting_data (столбец id)
             end_getting_data = self.start_getting_data + numb
             while self.start_getting_data < end_getting_data:
                 cur = {}
-                # проверка на наличие записи в таблице с нужным id
+                # проверка на наличие записи в таблице с нужным порядковым номером
                 form = f"select * from {category} where id = '{self.start_getting_data}';"
                 if self.cursor.execute(form):
                     # запись есть => получение данных из нее в row
@@ -96,15 +77,14 @@ class Functions:
                     # запись значений из row в словарь cur под соответствующими колонками
                     for value, column in zip(row, columns):
                         cur[column] = value
-                    # запись cur в result под уникальным category_id (id объявления на странице выбранной категории)
+                    # запись cur в result под уникальным category_id (id объявления на странице выбранной категории авито)
                     result[cur[f'{category}_id']] = cur
                     self.start_getting_data += 1
                 # если записи нет, значит в таблице больше не осталось невыбранных записей,
                 # и необходимо дополнить ее, используя ф-ю insert_data
                 else:
                     print(f"Need to insert {end_getting_data - self.start_getting_data} more ads")
-                    self.insert_data(category, end_getting_data - self.start_getting_data)
-            self.connection.close_connect()
+                    await self.insert_data(category, end_getting_data - self.start_getting_data)
             return result
         except Exception as ex:
-            print(ex)
+            print(ex, "get_data")

@@ -5,6 +5,7 @@ import pymysql
 class Bd:
     def __init__(self):
         self.connect = None
+        self.open_connect()
 
     def open_connect(self):
         # установление соединения с бд с помощью данных из db_config
@@ -14,6 +15,7 @@ class Bd:
                 user=db_config["user"],
                 password=db_config["password"],
                 database=db_config["db_name"],
+                autocommit=True
             )
 
         except Exception as ex:
