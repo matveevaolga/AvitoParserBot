@@ -42,10 +42,11 @@ class Functions:
         try:
             parser = Parser(self.driver, self.cursor)
             # парсинг объявлений
+            # в data находятся numb объявлений
             data = parser.parse_data(numb, category)
             for ad in data:
                 try:
-                    # добавляем элемент в таблицу
+                    # добавление элемента в таблицу
                     form = Functions.create_form(ad, category)
                     self.cursor.execute(form)
                     numb -= 1
@@ -62,11 +63,11 @@ class Functions:
             columns = [info[0] for info in self.cursor.fetchall()]
             result = {}
             # продолжаем вытаскивать записи из таблицы, пока не наберется нужное кол-во объявлений,
-            # начиная с записи под id start_getting_data (id = порядковый номер записи)
+            # начиная с записи под порядковым номером записи start_getting_data (столбец id)
             end_getting_data = self.start_getting_data + numb
             while self.start_getting_data < end_getting_data:
                 cur = {}
-                # проверка на наличие записи в таблице с нужным id
+                # проверка на наличие записи в таблице с нужным порядковым номером
                 form = f"select * from {category} where id = '{self.start_getting_data}';"
                 if self.cursor.execute(form):
                     # запись есть => получение данных из нее в row
@@ -76,7 +77,7 @@ class Functions:
                     # запись значений из row в словарь cur под соответствующими колонками
                     for value, column in zip(row, columns):
                         cur[column] = value
-                    # запись cur в result под уникальным category_id (id объявления на странице выбранной категории)
+                    # запись cur в result под уникальным category_id (id объявления на странице выбранной категории авито)
                     result[cur[f'{category}_id']] = cur
                     self.start_getting_data += 1
                 # если записи нет, значит в таблице больше не осталось невыбранных записей,

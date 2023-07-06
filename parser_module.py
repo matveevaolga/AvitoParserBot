@@ -1,6 +1,4 @@
 from selenium.webdriver.common.by import By
-from bd_module import Bd
-from selenium import webdriver
 
 
 class Parser:
@@ -37,8 +35,7 @@ class Parser:
                 if key == 'photo':
                     formed_dict[key] = driver.find_element(By.CSS_SELECTOR, self.selector_dict[key]).screenshot_as_base64
                 elif key == '_id':
-                    # если объявление уже встречалось в таблице выбранной категории, переход
-                    # к парсингу следующего объявления
+                    # объявление под category_id уже встречалось, парсинг останавливается
                     if self.cursor.execute(
                             f"SELECT id FROM {category} where {category}_id = '{item.get_attribute('id')}';"):
                         print("Has already been added", item.get_attribute('id'))
@@ -63,15 +60,18 @@ class Parser:
         return formed_dict
 
     def parse_data(self, numb, category):
-        # будет парсинг объявления под этим номером
         result = []
+        # парсинг продолжается, пока в result не добавится необходимое кол-во объявлений выбранной категории
         while len(result) != numb:
-            # парсинг продолжается, пока в таблицу выбранной категории не добавится необходимое кол-во объявлений
             # переход на страницу сайта с выбранной категорией
             self.driver.get(f"https://avito.ru/moskva/{category}")
+            # будет парсинг объявления под этим номером
             self.current_number[category] += 1
             cur = self._form_dict(self.driver, category)
+            # объявление не встречалось => добавляем его в result
             if cur:
                 result.append(cur)
                 print(f"Successfully parsed {cur[f'{category}_id']}")
+            # если объявление уже встречалось в таблице выбранной категории, переход
+            # к парсингу следующего объявления
         return result
