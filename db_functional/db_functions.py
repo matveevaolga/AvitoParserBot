@@ -1,5 +1,5 @@
-from parser_module import Parser
-from bd_module import Bd
+from parsing.parser_module import Parser
+from db_functional.bd_module import Bd
 from selenium import webdriver
 import base64
 
@@ -38,7 +38,7 @@ class Functions:
         driver.implicitly_wait(20)
         return driver
 
-    async def insert_data(self, category, numb):
+    def insert_data(self, category, numb):
         try:
             parser = Parser(self.driver, self.cursor)
             # парсинг объявлений
@@ -56,7 +56,7 @@ class Functions:
         except Exception as ex:
             print(ex, "insert_data")
 
-    async def get_data(self, category, numb):
+    def get_data(self, category, numb):
         try:
             # собираем в список имена всех столбцов в таблице выбранной категории
             self.cursor.execute(f"show columns from {category}")
@@ -84,7 +84,7 @@ class Functions:
                 # и необходимо дополнить ее, используя ф-ю insert_data
                 else:
                     print(f"Need to insert {end_getting_data - self.start_getting_data} more ads")
-                    await self.insert_data(category, end_getting_data - self.start_getting_data)
+                    self.insert_data(category, end_getting_data - self.start_getting_data)
             return result
         except Exception as ex:
             print(ex, "get_data")

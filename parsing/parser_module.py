@@ -24,7 +24,8 @@ class Parser:
             "link": "..."
         }
 
-    def _form_dict(self, driver, category):
+    @staticmethod
+    def form_dict(self, driver, category):
         formed_dict = {}
         link = ''
         # поиск объявления на странице выбранной категории под необходимым номером
@@ -67,7 +68,7 @@ class Parser:
             self.driver.get(f"https://avito.ru/moskva/{category}")
             # будет парсинг объявления под этим номером
             self.current_number[category] += 1
-            cur = self._form_dict(self.driver, category)
+            cur = Parser.form_dict(self, self.driver, category)
             # объявление не встречалось => добавляем его в result
             if cur:
                 result.append(cur)

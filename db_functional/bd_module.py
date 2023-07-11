@@ -1,4 +1,4 @@
-from config import db_config
+from db_functional.config import db_config
 import pymysql
 
 
