@@ -25,7 +25,7 @@ async def main():
         # запуск бота
         await dispatcher.start_polling(bot)
     except Exception as ex:
-        print(ex)
+        print(ex, "main")
 
 if __name__ == '__main__':
     asyncio.run(main())

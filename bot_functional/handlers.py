@@ -66,4 +66,7 @@ async def category_choice(callback: CallbackQuery):
 # удаление ненужных отправленных в чат сообщений
 @router.message()
 async def other_messages(message: Message):
-    await message.delete()
+    try:
+        await message.delete()
+    except Exception as ex:
+        print(ex, "other_messages")
