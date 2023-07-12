@@ -7,11 +7,11 @@ class Parser:
         self.cursor = cursor
         # словарь с порядковым номером последнего обработанного объявления на странице каждой из категорий
         self.current_number = {
-            "zhivotnye": 0,
-            "krasota_i_zdorove": 0,
-            "dlya_biznesa": 0,
-            "hobbi_i_otdyh": 0,
-            "tovary_dlya_detey_i_igrushki": 0,
+            "gryzuny": 0,
+            "koshki": 0,
+            "kroliki": 0,
+            "ptitsy": 0,
+            "sobaki": 0
         }
         # словарь с соответствующими селекторами для каждого столбца таблицы
         self.selector_dict = {
@@ -24,7 +24,8 @@ class Parser:
             "link": "..."
         }
 
-    def _form_dict(self, driver, category):
+    @staticmethod
+    def form_dict(self, driver, category):
         formed_dict = {}
         link = ''
         # поиск объявления на странице выбранной категории под необходимым номером
@@ -64,10 +65,13 @@ class Parser:
         # парсинг продолжается, пока в result не добавится необходимое кол-во объявлений выбранной категории
         while len(result) != numb:
             # переход на страницу сайта с выбранной категорией
-            self.driver.get(f"https://avito.ru/moskva/{category}")
+            base_link = "https://avito.ru/moskva/"
+            if category in ["kroliki", "gryzuny"]:
+                base_link += "drugie_zhivotnye/"
+            self.driver.get(base_link+category)
             # будет парсинг объявления под этим номером
             self.current_number[category] += 1
-            cur = self._form_dict(self.driver, category)
+            cur = Parser.form_dict(self, self.driver, category)
             # объявление не встречалось => добавляем его в result
             if cur:
                 result.append(cur)

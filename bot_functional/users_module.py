@@ -1,8 +1,8 @@
-from config import db_config
+from bot_functional.config import db_config
 import pymysql
 
 
-class Bd:
+class Users:
     def __init__(self):
         self.connect = None
         self.open_connect()
