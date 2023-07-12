@@ -77,7 +77,8 @@ class Functions:
                     # запись значений из row в словарь cur под соответствующими колонками
                     for value, column in zip(row, columns):
                         cur[column] = value
-                    # запись cur в result под уникальным category_id (id объявления на странице выбранной категории авито)
+                    # запись cur в result под уникальным category_id (id
+                    # объявления на странице выбранной категории авито)
                     result[cur[f'{category}_id']] = cur
                     self.start_getting_data += 1
                 # если записи нет, значит в таблице больше не осталось невыбранных записей,

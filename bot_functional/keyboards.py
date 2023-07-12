@@ -8,7 +8,7 @@ def create_categories_kb() -> InlineKeyboardMarkup:
     for category in categories:
         new_button: InlineKeyboardButton = InlineKeyboardButton(
             text=category,
-            callback_data=f"Выбраны {category.split()[0].lower()}."
+            callback_data=f"{category.split()[0].lower()}"
         )
         keyboard.append(new_button)
     keyboard_builder: InlineKeyboardBuilder = InlineKeyboardBuilder()
