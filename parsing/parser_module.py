@@ -65,7 +65,10 @@ class Parser:
         # парсинг продолжается, пока в result не добавится необходимое кол-во объявлений выбранной категории
         while len(result) != numb:
             # переход на страницу сайта с выбранной категорией
-            self.driver.get(f"https://avito.ru/moskva/{category}")
+            base_link = "https://avito.ru/moskva/"
+            if category in ["kroliki", "gryzuny"]:
+                base_link += "drugie_zhivotnye/"
+            self.driver.get(base_link+category)
             # будет парсинг объявления под этим номером
             self.current_number[category] += 1
             cur = Parser.form_dict(self, self.driver, category)
