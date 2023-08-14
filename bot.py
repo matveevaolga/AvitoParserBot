@@ -8,7 +8,8 @@ from bot_functional.handlers import router
 # создание меню
 async def set_main_menu(bot: Bot):
     main_menu_commands = [
-        BotCommand(command="/start", description="Начать искать питомца.")]
+        BotCommand(command="/start", description="Начать искать питомца."),
+        BotCommand(command='/statistics', description='Статистика твоих запросов.')]
     await bot.set_my_commands(main_menu_commands)
 
 
