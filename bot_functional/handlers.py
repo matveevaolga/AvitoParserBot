@@ -6,6 +6,7 @@ from bot_functional.keyboards import categories_keyboard, number_keyboard
 from bot_functional.users_module import Users
 from bot_functional.data_module import send_data
 from transliterate import translit
+import datetime
 
 router: Router = Router()
 
@@ -33,10 +34,25 @@ async def process_start_command(message: Message):
 @router.callback_query(lambda callback: callback.data.isdigit())
 async def number_choice(callback: CallbackQuery):
     try:
-        # изменение для текущего пользователя количества запрашиваемых сообщений
-        cursor.execute(f"update users set current_amount={int(callback.data)} where user_id='{callback.message.chat.id}';")
-        await callback.message.answer(text=callback.data)
         chat_id = callback.message.chat.id
+        # изменение для текущего пользователя количества запрашиваемых сообщений
+        cursor.execute(f"update users set current_amount={int(callback.data)} where user_id='{chat_id}';")
+
+        # собираем в список имена всех столбцов в таблице выбранной категории
+        cursor.execute(f"show columns from users")
+        columns = [info[0] for info in cursor.fetchall()]
+        # проверка на наличие в таблице текущей даты и обновление кол-ва объявлений в этот день
+        today = str(datetime.date.today())
+        today = today.replace('-', '_')
+        today = '2023_08_17'
+        print(columns)
+        if today not in columns:
+            cursor.execute(f"alter table users add column {today} int default 0;")
+        cursor.execute(f"select {today} from users where user_id='{chat_id}';")
+        curr = cursor.fetchone()[0]
+        cursor.execute(f"update users set {today}={curr + int(callback.data)} where user_id = '{chat_id}';")
+
+        await callback.message.answer(text=callback.data)
         # удаление отправленной ранее клавиатуры с выбором кол-ва объявлений
         await callback.message.delete()
         await callback.answer()
