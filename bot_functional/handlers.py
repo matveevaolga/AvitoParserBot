@@ -21,22 +21,21 @@ cursor: users.connect.cursor = users.connect.cursor()
 @router.message(Command(commands="statistics"))
 async def send_statistics(message: Message):
     try:
-        # собираем в список имена всех столбцов в таблице выбранной категории
-        cursor.execute(f"show columns from users")
-        columns = [info[0] for info in cursor.fetchall()]
-        # данные текущего пользователя
-        cursor.execute(f"select * from users where user_id='{message.chat.id}';")
-        info = cursor.fetchall()[0]
-        by_date = info[8:]
-        by_category = info[3:8]
-        # создание таблиц
-        by_date = {'Date': columns[8:], 'Amount': by_date}
-        by_category = {'Category': [translit(x, 'ru') for x in columns[3:8]], 'Amount': by_category}
-        # # define plotting region (1 row, 2 columns)
-        f, axes = plt.subplots(1, 2, figsize=(20, 5))
-        f.suptitle(f'Статистика запросов пользователя {message.from_user.full_name}')
-        sns.lineplot(data=by_date, x='Date', y='Amount', ax=axes[0])
-        sns.lineplot(data=by_category, x='Category', y='Amount', ax=axes[1])
+        user_id = message.chat.id
+        cursor.execute(f"SELECT date, amount FROM queries where user_id = {user_id};")
+        amount_by_date = {}
+        for date, amount in cursor.fetchall():
+            amount_by_date[date] = amount_by_date.get(date, 0) + amount
+        # создание таблицы
+        dates = list(amount_by_date.keys())
+        amounts = list(amount_by_date.values())
+        by_date = {'Дата': dates, 'Количество запросов': amounts}
+        plt.figure(figsize=(10, 10))
+        plt.yticks([x for x in range(min(amounts), max(amounts) + 1, 5)])
+        plt.ylabel('Количество запросов')
+        plt.xlabel('Дата')
+        plt.suptitle(f'Статистика запросов пользователя {message.from_user.full_name}')
+        sns.pointplot(data=by_date, y='Количество запросов', x='Дата')
         # сохранение и отправка графика
         plt.savefig(fname=f'C:/AvitoParserBot/graphics/figure{message.chat.id}.png')
         photo = FSInputFile(f'C:/AvitoParserBot/graphics/figure{message.chat.id}.png')
