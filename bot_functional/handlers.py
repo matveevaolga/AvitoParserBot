@@ -50,10 +50,10 @@ async def send_statistics(message: Message):
 async def process_start_command(message: Message):
     try:
         # если пользователя еще нет в users, он туда добавляется
-        form = f"select koshki from users where user_id = '{message.chat.id}';"
-        if not cursor.execute(form):
-            cursor.execute(f"""insert into users (user_id, current_category, current_amount, gryzuny, koshki, kroliki, """
-                           f"""ptitsy, sobaki) values ('{message.chat.id}', 'koshki', 0, 1, 1, 1, 1, 1);""")
+        form = f"SELECT user_id FROM users WHERE user_id = {message.chat.id};"
+        cursor.execute(form)
+        if not cursor.fetchone():
+            cursor.execute(f"INSERT users (user_id, fav_category, all_count, fav_category_count) VALUES ({message.chat.id}, 'koshki', DEFAULT, DEFAULT);")
         # отправка клавиатуры для выбора категории объявлений
         await message.answer(text=lexicon["/start"], reply_markup=categories_keyboard)
     except Exception as ex:
@@ -64,30 +64,33 @@ async def process_start_command(message: Message):
 @router.callback_query(lambda callback: callback.data.isdigit())
 async def number_choice(callback: CallbackQuery):
     try:
-        chat_id = callback.message.chat.id
-        # изменение для текущего пользователя количества запрашиваемых сообщений
-        cursor.execute(f"update users set current_amount={int(callback.data)} where user_id='{chat_id}';")
-
-        # собираем в список имена всех столбцов в таблице выбранной категории
-        cursor.execute(f"show columns from users")
-        columns = [info[0] for info in cursor.fetchall()]
-        # проверка на наличие в таблице текущей даты и обновление кол-ва объявлений в этот день
-        today = str(datetime.date.today())
-        today = today.replace('-', '_')
-        today = '2023_08_17'
-        print(columns)
-        if today not in columns:
-            cursor.execute(f"alter table users add column {today} int default 0;")
-        cursor.execute(f"select {today} from users where user_id='{chat_id}';")
-        curr = cursor.fetchone()[0]
-        cursor.execute(f"update users set {today}={curr + int(callback.data)} where user_id = '{chat_id}';")
-
+        user_id = callback.message.chat.id
+        amount = int(callback.data)
+        # получение id последнего запроса
+        cursor.execute(f"select max(query_id) from queries where user_id = {user_id};")
+        last_query = cursor.fetchone()[0]
+        # увеличение общего кол-ва запросов текущего пользователя
+        cursor.execute(f"update users set all_count=all_count+{amount} where user_id={user_id};")
+        # установка кол-ва запрашиваемых объявлений для текущего запроса
+        cursor.execute(f"update queries set amount={amount} where query_id={last_query};")
+        # получение кол-ва объявлений из любимой категории пользователя
+        cursor.execute(f"select fav_category_count from users where user_id = {user_id};")
+        current_fav_count = cursor.fetchone()[0]
+        # общее кол-во запросов пользователя по текущей категории
+        cursor.execute(f"select category from queries where query_id = {last_query};")
+        current_category = cursor.fetchone()[0]
+        cursor.execute(f"select sum(amount) from queries where user_id = {user_id} and category = '{current_category}';")
+        current_category_count = cursor.fetchone()[0]
+        # изменение любимой категории пользователя
+        if current_category_count > current_fav_count:
+            cursor.execute(f"update users set fav_category = '{current_category}' where user_id = {user_id};")
+            cursor.execute(f"update users set fav_category_count = {current_category_count} where user_id = {user_id};")
         await callback.message.answer(text=callback.data)
         # удаление отправленной ранее клавиатуры с выбором кол-ва объявлений
         await callback.message.delete()
         await callback.answer()
         # вызов функции send_data из data_module для отправки необходимого кол-ва объявлений из выбранной категории
-        await send_data(chat_id, cursor)
+        await send_data(user_id, current_category, amount, current_category_count)
     except Exception as ex:
         print(ex, "number_choice")
 
@@ -96,10 +99,16 @@ async def number_choice(callback: CallbackQuery):
 @router.callback_query()
 async def category_choice(callback: CallbackQuery):
     try:
-        await callback.message.answer(text=f"Выбраны {callback.data}.")
-        # изменение для пользователя "активной" категории (категория транслируется для получения данных из бд)
-        cursor.execute(f"update users set current_category='{translit(callback.data, reversed=True)}'"
-                       f" where user_id='{callback.message.chat.id}';")
+        user_id = callback.message.chat.id
+        category = callback.data
+        today = str(datetime.date.today())
+        await callback.message.answer(text=f"Выбраны {category}.")
+        # создание нового запроса в таблице queries
+        cursor.execute(f"insert queries (category, date, user_id) values ('{translit(category, language_code='ru', reversed=True)}', '{today}', {user_id});")
+        # получение id последнего запроса
+        cursor.execute(f"select max(query_id) from queries where user_id = {user_id};")
+        # изменение id последнего запроса в таблице users для текущего пользователя
+        cursor.execute(f"update users set last_request_id = {cursor.fetchone()[0]};")
         # отправка клавиатуры для выбора количества объявлений
         await callback.message.answer(text=lexicon["amount"], reply_markup=number_keyboard)
         # удаление отправленной ранее клавиатуры с категориями
