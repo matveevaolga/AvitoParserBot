@@ -9,7 +9,7 @@ async def send_data(user_id, category, need_to_get, start_getting_data):
     try:
         # с этого номера начнется получение объявлений из бд
         bd_functions.start_getting_data = start_getting_data - need_to_get + 1
-        adds = bd_functions.get_data(category, need_to_get)
+        adds = await bd_functions.get_data(category, need_to_get, user_id)
         # составление сообщений из полученных данных и их отправка в чат
         for add in adds.values():
             photo: BufferedInputFile = BufferedInputFile(file=add["photo"], filename=f"{add[f'{category}_id']}")
