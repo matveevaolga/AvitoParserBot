@@ -29,9 +29,22 @@ async def send_statistics(message: Message):
         # создание таблицы
         dates = list(amount_by_date.keys())
         amounts = list(amount_by_date.values())
+        print(dates)
+        step = 5
+        date_format = '%Y-%m-%d'
+        start_date = datetime.datetime.strptime(dates[0], date_format)
+        end_date = datetime.datetime.strptime(dates[-1], date_format) + datetime.timedelta(days=step)
+        dates = [datetime.datetime.strptime(d, date_format) for d in dates]
+        dates_list = []
+        # добавление в список диапазона дат
+        while start_date <= end_date:
+            dates_list.append(start_date)
+            start_date += datetime.timedelta(days=step)
+        print(dates_list)
         by_date = {'Дата': dates, 'Количество запросов': amounts}
         plt.figure(figsize=(10, 10))
-        plt.yticks([x for x in range(min(amounts), max(amounts) + 6, 5)])
+        plt.yticks([x for x in range(min(amounts), max(amounts) + step + 1, step)])
+        plt.xticks(dates_list)
         plt.ylabel('Количество запросов')
         plt.xlabel('Дата')
         plt.suptitle(f'Статистика запросов пользователя {message.from_user.full_name}')
