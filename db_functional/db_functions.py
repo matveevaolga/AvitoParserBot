@@ -1,5 +1,6 @@
 from parsing.parser_module import Parser
 from db_functional.bd_module import Bd
+from aiogram.methods import send_message
 from selenium import webdriver
 import base64
 
@@ -33,7 +34,7 @@ class Functions:
         options.add_experimental_option('useAutomationExtension', False)
         options.add_argument("--disable-blink-features=AutomationControlled")
         options.add_argument("--headless")
-        driver = webdriver.Chrome(options=options, executable_path=r"webdriver\chromedriver.exe")
+        driver = webdriver.Chrome(options=options)
         driver.maximize_window()
         driver.implicitly_wait(20)
         return driver
@@ -56,8 +57,9 @@ class Functions:
         except Exception as ex:
             print(ex, "insert_data")
 
-    def get_data(self, category, numb):
+    async def get_data(self, category, numb, user_id):
         try:
+            await send_message.SendMessage(chat_id=user_id, text='Идет поиск объявлений...')
             # собираем в список имена всех столбцов в таблице выбранной категории
             self.cursor.execute(f"show columns from {category}")
             columns = [info[0] for info in self.cursor.fetchall()]

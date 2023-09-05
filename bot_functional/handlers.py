@@ -31,7 +31,7 @@ async def send_statistics(message: Message):
         amounts = list(amount_by_date.values())
         by_date = {'Дата': dates, 'Количество запросов': amounts}
         plt.figure(figsize=(10, 10))
-        plt.yticks([x for x in range(min(amounts), max(amounts) + 1, 5)])
+        plt.yticks([x for x in range(min(amounts), max(amounts) + 6, 5)])
         plt.ylabel('Количество запросов')
         plt.xlabel('Дата')
         plt.suptitle(f'Статистика запросов пользователя {message.from_user.full_name}')
