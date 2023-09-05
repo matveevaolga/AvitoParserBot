@@ -1,3 +1,4 @@
+import matplotlib.dates
 from aiogram.types import Message, CallbackQuery, FSInputFile
 from aiogram.filters import Command
 from bot_functional.bot_lexicon import lexicon
@@ -35,16 +36,18 @@ async def send_statistics(message: Message):
         start_date = datetime.datetime.strptime(dates[0], date_format)
         end_date = datetime.datetime.strptime(dates[-1], date_format) + datetime.timedelta(days=step)
         dates = [datetime.datetime.strptime(d, date_format) for d in dates]
+        print(type(dates[0]))
         dates_list = []
         # добавление в список диапазона дат
         while start_date <= end_date:
             dates_list.append(start_date)
             start_date += datetime.timedelta(days=step)
         print(dates_list)
-        by_date = {'Дата': dates, 'Количество запросов': amounts}
+        dx = matplotlib.dates.date2num(dates_list)
+        by_date = {'Дата': dx, 'Количество запросов': amounts}
         plt.figure(figsize=(10, 10))
         plt.yticks([x for x in range(min(amounts), max(amounts) + step + 1, step)])
-        plt.xticks(dates_list)
+        plt.xticks(dates)
         plt.ylabel('Количество запросов')
         plt.xlabel('Дата')
         plt.suptitle(f'Статистика запросов пользователя {message.from_user.full_name}')
